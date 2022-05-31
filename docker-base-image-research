@@ -1,13 +1,13 @@
-Goal:
-The goal is to reduce the vulnerabilities in the containers and harden the base image, the container images, and provide streamlined methodology.
+#Goal:
+#The goal is to reduce the vulnerabilities in the containers and harden the base image, the container images, and provide streamlined methodology.
 
-Host OS:
-It is obvious that the HOST OS should be up to date. We need to make sure the HOST OS should be running with the latest versions from the provider.
+#Host OS:
+#It is obvious that the HOST OS should be up to date. We need to make sure the HOST OS should be running with the latest versions from the provider.
 
-Base Image:
-Trustworthiness: We should use the images from the trustworthy providers. 
+#Base Image:
+#Trustworthiness: We should use the images from the trustworthy providers. 
 
-Minimal base image: We need to restrict the image to required binaries, libraries, and configuration files provides the best protection. We should use light versions of base images such as ‘Debian-Slim' image which is ~40% lighter than the 'Debain-stable’ image or alpine images.
+#Minimal base image: We need to restrict the image to required binaries, libraries, and configuration files provides the best protection. We should use light versions of base images such as ‘Debian-Slim' image which is ~40% lighter than the 'Debain-stable’ image or alpine images.
 
 Create a baseline:
 
@@ -17,12 +17,11 @@ Steps:
 
 Create a docker image with just the base version.
 
+  FROM insecure-base-image:latest
+  RUN apt update -y && apt install -y unpatched-package
 
-FROM insecure-base-image:latest
-RUN apt update -y && apt install -y unpatched-package
-
-docker build -t secure-base-image:latest .
-docker push example.com/secure-base-image:latest
+  docker build -t secure-base-image:latest .
+  docker push example.com/secure-base-image:latest
 Now, we need to scan the above base image to find any vulnerabilities using open-source and proprietary image scanners.
 
 This should be a mandatory step for the team. We must add the CI/CD pipeline that the image should be available for use if there are no vulnerabilities.
@@ -32,18 +31,16 @@ Once the scanning is successful, we need to store the secured base image in the 
 Now, we can use the below image as a base image in the docker file where your actual configuration exists.
 
 
-secure-base-image:latest
+  secure-base-image:latest
 Here is how it looks like. Instead of the ‘insecure-base-image:latest’, we will use 'secure-base-image:latest'
 
 
-FROM insecure-base-image:latest
+   FROM insecure-base-image:latest
 it looks like this
 
+   FROM secure-base-image:latest
 
-FROM secure-base-image:latest
 After we use the secured base image, we will build another docker image (Ex: application-image:latest) which has all the configuration for the application to run.
-
- 
 
 Make use of .Dockerignore file:
 
