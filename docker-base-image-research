@@ -1,0 +1,90 @@
+Goal:
+The goal is to reduce the vulnerabilities in the containers and harden the base image, the container images, and provide streamlined methodology.
+
+Host OS:
+It is obvious that the HOST OS should be up to date. We need to make sure the HOST OS should be running with the latest versions from the provider.
+
+Base Image:
+Trustworthiness: We should use the images from the trustworthy providers. 
+
+Minimal base image: We need to restrict the image to required binaries, libraries, and configuration files provides the best protection. We should use light versions of base images such as ‘Debian-Slim' image which is ~40% lighter than the 'Debain-stable’ image or alpine images.
+
+Create a baseline:
+
+It’s a good idea when building your container images to scan just your base image before adding any modifications. In this way, you establish a container image security baseline and can easily see what vulnerabilities were in your base image, and which you have added in subsequent layers.
+
+Steps: 
+
+Create a docker image with just the base version.
+
+
+FROM insecure-base-image:latest
+RUN apt update -y && apt install -y unpatched-package
+
+docker build -t secure-base-image:latest .
+docker push example.com/secure-base-image:latest
+Now, we need to scan the above base image to find any vulnerabilities using open-source and proprietary image scanners.
+
+This should be a mandatory step for the team. We must add the CI/CD pipeline that the image should be available for use if there are no vulnerabilities.
+
+Once the scanning is successful, we need to store the secured base image in the artifactory.
+
+Now, we can use the below image as a base image in the docker file where your actual configuration exists.
+
+
+secure-base-image:latest
+Here is how it looks like. Instead of the ‘insecure-base-image:latest’, we will use 'secure-base-image:latest'
+
+
+FROM insecure-base-image:latest
+it looks like this
+
+
+FROM secure-base-image:latest
+After we use the secured base image, we will build another docker image (Ex: application-image:latest) which has all the configuration for the application to run.
+
+ 
+
+Make use of .Dockerignore file:
+
+Specify the files/directories that we want to ignore while building the docker image. Also, it helps reducing the size of the docker image which imprvoes performance and security.
+
+We might have some important source files or files that contain secret keys or passphrases in your build context. We do not want to expose such important files into the final docker image. For example, exposing your .git folder inside your docker image. Thus, it’s always recommended to ignore such files and folders by mentioning them into .dockerignore file.
+
+Example: 
+
+
+#Ignore the logs directory
+logs/
+
+#Ignoring the password file
+passwords.txt
+
+#Ignoring git and cache folders
+.git
+.cache
+
+#Ignoring all the markdown and class files
+*.md
+**/*.class
+Running the Containers:
+
+Never run/start the container as ROOT user, this will help preventing the attacker gain ROOT access to the host machine in the event of container compromises.
+
+Run the containers in the ‘Read-only' state. This will ensure the directories/files can’t be modified. Allow only required directories/file to be modified for the application to run.
+
+Final image should be scanned again:
+
+The final image also should go through the vulnerability scanning using the open-source and proprietary image scanners.
+
+We must add the step to CI/CD pipeline that it should be available for use if there are no vulnerabilities.
+
+If there are no vulnerabilities or if it meets the approved policies, we can store the image as a artifactory and use it for start/run the container.
+
+Secrets:
+No secrets should be stored in the docker images such as IAM keys, SSH keys, DB passwords, TLS keys etc. Ensure to use managed service from the cloud providers. (For example. AWS secrets manager,  Kubernetes Secrets )
+
+Scan:
+When building an image in your CI pipeline, image scanning must be a requirement for a passing build run. Unsafe images should never get pushed to your production-accessible container registry.
+
+Define policies for what will be an unsafe image, using metrics such as, vulnerability severity, number of vulnerabilities, etc..
